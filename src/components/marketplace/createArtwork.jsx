@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useUser } from "@civic/auth-web3/react";
+import { UserButton } from "@civic/auth-web3/react";
 import { useNavigate } from 'react-router-dom';
 
 export default function CreateArtwork() {
@@ -60,6 +61,17 @@ export default function CreateArtwork() {
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Sign In Required</h2>
           <p className="text-gray-400">Please sign in to upload your artwork</p>
+          <div className="px-12 py-12 civic-button-container">
+                <UserButton
+                  style={{
+                    border: '2px solid #6b7280',
+                    borderRadius: '0',
+                    background: 'transparent',
+                    padding: '8px 24px',
+                    width: '100%',
+                  }}
+                />
+              </div>
         </div>
       </div>
     );
