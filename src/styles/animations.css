@@ -1,0 +1,15 @@
+@keyframes float {
+  0% {
+    transform: translateY(0px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(-4deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(-6deg);
+  }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
