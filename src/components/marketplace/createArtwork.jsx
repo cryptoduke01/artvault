@@ -1,183 +1,216 @@
 import { useState } from 'react';
 import { useUser } from "@civic/auth-web3/react";
-import { UserButton } from "@civic/auth-web3/react";
-import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import toast from 'react-hot-toast';
 
-export default function CreateArtwork() {
+const CreateArtwork = () => {
   const { user } = useUser();
-  const navigate = useNavigate();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  const [artworkData, setArtworkData] = useState({
-    title: '',
-    description: '',
-    price: '',
-    category: 'digital-art',
-  });
-  const [image, setImage] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleImageChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result);
+        setPreview(reader.result);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setArtworkData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      alert('Please sign in to upload artwork');
-      return;
-    }
+    if (!user?.email || !file) return;
 
-    setLoading(true);
     try {
-      // Here we'll add the artwork upload logic later
-      // For now just console.log
-      console.log('Uploading artwork:', { ...artworkData, image });
-      navigate('/marketplace');
+      setUploading(true);
+
+      // First, get the user's ID from Supabase
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+
+      if (userError) throw userError;
+
+      // Upload image to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('artworks')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('artworks')
+        .getPublicUrl(fileName);
+
+      // Create artwork record
+      const { error: insertError } = await supabase
+        .from('artworks')
+        .insert({
+          title,
+          description,
+          price,
+          image_url: publicUrl,
+          creator_id: userData.id
+        });
+
+      if (insertError) throw insertError;
+
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setPrice('');
+      setFile(null);
+      setPreview(null);
+
+      toast.success('Artwork created successfully!');
     } catch (error) {
-      console.error('Failed to upload artwork:', error);
+      console.error('Error creating artwork:', error);
+      toast.error('Error creating artwork. Please try again.');
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Sign In Required</h2>
-          <p className="text-gray-400">Please sign in to upload your artwork</p>
-          <div className="px-12 py-12 civic-button-container">
-                <UserButton
-                  style={{
-                    border: '2px solid #6b7280',
-                    borderRadius: '0',
-                    background: 'transparent',
-                    padding: '8px 24px',
-                    width: '100%',
-                  }}
-                />
-              </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-lg text-gray-600">Please sign in to create artwork</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 pt-24">
-      <h2 className="text-3xl font-bold mb-8">Upload Your Artwork</h2>
+    <div className="max-w-4xl mx-auto p-6 pt-24">
+      <h1 className="text-3xl font-bold mb-8 border-b border-white/10 pb-4">Create New Artwork</h1>
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Artwork Image</label>
-          <div className="border-2 border-dashed border-gray-700 rounded-lg p-4">
-            {image ? (
-              <div className="relative">
-                <img src={image} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
-                <button
-                  type="button"
-                  onClick={() => setImage(null)}
-                  className="absolute top-2 right-2 bg-red-500 p-2 rounded-full"
-                >
-                  ×
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  id="artwork-upload"
-                />
-                <label
-                  htmlFor="artwork-upload"
-                  className="cursor-pointer text-primary hover:text-primary/80"
-                >
-                  <div className="space-y-2">
-                    <span className="block">Click to upload image</span>
-                    <span className="text-sm text-gray-400">PNG, JPG, GIF up to 10MB</span>
-                  </div>
-                </label>
-              </div>
-            )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Left Column - Form Fields */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full p-3 bg-black border border-white/10 focus:border-primary transition-colors outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full p-3 bg-black border border-white/10 focus:border-primary transition-colors outline-none h-32"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-200">
+                Price (SOL)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                name="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full bg-white/5 border-2 border-white/10 focus:border-primary focus:ring-1 focus:ring-primary/50 text-white px-4 py-2"
+                placeholder="Enter price in SOL"
+              />
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Title</label>
-          <input
-            type="text"
-            name="title"
-            value={artworkData.title}
-            onChange={handleInputChange}
-            className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-2"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Description</label>
-          <textarea
-            name="description"
-            value={artworkData.description}
-            onChange={handleInputChange}
-            rows={4}
-            className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Price (USDC)</label>
-          <input
-            type="number"
-            name="price"
-            value={artworkData.price}
-            onChange={handleInputChange}
-            step="0.01"
-            min="0"
-            className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-2"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Category</label>
-          <select
-            name="category"
-            value={artworkData.category}
-            onChange={handleInputChange}
-            className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-2"
-          >
-            <option value="digital-art">Digital Art</option>
-            <option value="illustration">Illustration</option>
-            <option value="photography">Photography</option>
-            <option value="3d">3D Art</option>
-          </select>
+          {/* Right Column - Image Upload */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Artwork Image</label>
+            <div className="border border-white/10 p-4">
+              {preview ? (
+                <div className="relative">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="w-full h-64 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFile(null);
+                      setPreview(null);
+                    }}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 border border-dashed border-white/20">
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                    id="artwork-upload"
+                    required
+                  />
+                  <label
+                    htmlFor="artwork-upload"
+                    className="cursor-pointer flex flex-col items-center justify-center w-full h-full"
+                  >
+                    <svg
+                      className="w-12 h-12 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    <span className="mt-2 text-gray-500">Click to upload artwork</span>
+                  </label>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <button
           type="submit"
-          disabled={loading || !image}
-          className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={uploading}
+          className="w-full bg-primary text-white px-8 py-4 hover:bg-primary/80 transition-colors border-2 border-primary hover:border-primary/80 font-general-sans disabled:opacity-50"
         >
-          {loading ? 'Uploading...' : 'Upload Artwork'}
+          {uploading ? (
+            <div className="flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            'Create Artwork'
+          )}
         </button>
       </form>
     </div>
   );
-}
+};
+
+export default CreateArtwork;

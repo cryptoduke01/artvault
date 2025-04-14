@@ -25,6 +25,25 @@
     --ring: 267 100% 66%;
     --radius: 0.75rem;
   }
+
+  .ToastRoot {
+    background-color: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    @apply rounded-lg shadow-2xl;
+  }
+
+  .ToastTitle {
+    @apply font-semibold text-white;
+  }
+
+  .ToastDescription {
+    @apply text-gray-400;
+  }
+
+  .ToastAction {
+    @apply border border-white/10 hover:bg-white/5;
+  }
 }
 
 @layer base {
@@ -33,7 +52,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Inter", sans-serif;
+    font-family: "General Sans", sans-serif !important;
   }
   h1,
   h2,

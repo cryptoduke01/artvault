@@ -18,3 +18,14 @@
 .civic-button-container .avatar {
   border-radius: 0 !important;
 }
+
+.civic-button {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+}
+
+.civic-button img {
+  border-radius: 50% !important;
+}

@@ -20,7 +20,7 @@ export default function Navbar() {
             <Link to="/marketplace" className="text-gray-300 hover:text-white transition-colors">
               Marketplace
             </Link>
-            
+
             <Link to="/create" className="text-gray-300 hover:text-white transition-colors">
               List Artwork
             </Link>
@@ -62,14 +62,11 @@ export default function Navbar() {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="px-4 py-4 space-y-4"
             >
-              <Link to="/discover" className="block px-3 py-2 text-gray-300 hover:text-white">
-                Discover Art
+              <Link to="/marketplace" className="block px-3 py-2 text-gray-300 hover:text-white">
+                Marketplace
               </Link>
-              <Link to="/sell" className="block px-3 py-2 text-gray-300 hover:text-white">
-                Sell Artwork
-              </Link>
-              <Link to="/collection" className="block px-3 py-2 text-gray-300 hover:text-white">
-                My Collection
+              <Link to="/create" className="block px-3 py-2 text-gray-300 hover:text-white">
+                List Artwork
               </Link>
               <div className="px-3 py-2 civic-button-container">
                 <UserButton
