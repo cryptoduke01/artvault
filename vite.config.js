@@ -1,27 +1,31 @@
-import path from "path"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
-    },
-    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
-  },
   build: {
+    target: 'esnext',
     sourcemap: true,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html')
-      },
-      output: {
-        manualChunks: undefined
       }
     }
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom']
+  resolve: {
+    extensions: ['.mjs', '.js', '.jsx', '.json', '.ts', '.tsx'],
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      'components': path.resolve(__dirname, './src/components')
+    }
+  },
+  server: {
+    port: 3000
+  },
+  esbuild: {
+    loader: 'jsx',
+    include: /\.[jt]sx?$/,
+    exclude: []
   }
 })

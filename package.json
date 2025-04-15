@@ -12,6 +12,7 @@
   "dependencies": {
     "@civic/auth": "^0.4.5",
     "@civic/auth-web3": "^0.5.2",
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.0.1",
     "@shadcn/ui": "^0.0.4",
     "@solana/wallet-adapter-base": "^0.9.24",

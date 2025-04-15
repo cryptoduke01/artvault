@@ -20,6 +20,13 @@ const Dashboard = () => {
   const [ethereumBalance, setEthereumBalance] = useState(null);
   const [userArtworks, setUserArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedAddress, setCopiedAddress] = useState('');
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedAddress(text);
+    setTimeout(() => setCopiedAddress(''), 2000);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,6 +140,7 @@ const Dashboard = () => {
             <div className="flex-grow">
               <h2 className="text-2xl font-bold font-display">{userContext.user?.name}</h2>
               <p className="text-gray-400 font-general-sans">{userContext.user?.email}</p>
+
             </div>
             <div className="text-center">
               <p className="text-4xl font-bold text-primary font-display">{userArtworks.length}</p>
@@ -148,11 +156,31 @@ const Dashboard = () => {
             <h3 className="text-xl font-bold mb-4 font-display">Solana Wallet</h3>
             <div className="space-y-2 font-general-sans">
               <p className="text-gray-400">Address:</p>
-              <p className="font-mono text-sm break-all bg-black/50 p-2 border border-white/10">
-                {userHasWallet(userContext) && userContext.solana?.wallet
-                  ? userContext.solana.wallet.publicKey.toString()
-                  : 'No wallet created'}
-              </p>
+              <div className="flex items-center bg-black/50 p-2 border border-white/10">
+                <p className="font-mono text-sm break-all flex-grow">
+                  {userHasWallet(userContext) && userContext.solana?.wallet
+                    ? userContext.solana.wallet.publicKey.toString()
+                    : 'No wallet created'}
+                </p>
+                {userHasWallet(userContext) && userContext.solana?.wallet && (
+                  <button 
+                    onClick={() => copyToClipboard(userContext.solana.wallet.publicKey.toString())}
+                    className="ml-2 text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                    title="Copy address"
+                  >
+                    {copiedAddress === userContext.solana.wallet.publicKey.toString() ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
               {userHasWallet(userContext) && (
                 <>
                   <p className="text-gray-400 mt-4">Balance:</p>
@@ -169,9 +197,29 @@ const Dashboard = () => {
             <h3 className="text-xl font-bold mb-4 font-display">Ethereum Wallet</h3>
             <div className="space-y-2 font-general-sans">
               <p className="text-gray-400">Address:</p>
-              <p className="font-mono text-sm break-all bg-black/50 p-2 border border-white/10">
-                {userContext.ethereum?.address || 'No ETH wallet available'}
-              </p>
+              <div className="flex items-center bg-black/50 p-2 border border-white/10">
+                <p className="font-mono text-sm break-all flex-grow">
+                  {userContext.ethereum?.address || 'No ETH wallet available'}
+                </p>
+                {userContext.ethereum?.address && (
+                  <button 
+                    onClick={() => copyToClipboard(userContext.ethereum.address)}
+                    className="ml-2 text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                    title="Copy address"
+                  >
+                    {copiedAddress === userContext.ethereum.address ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
               {userContext.ethereum?.address && (
                 <>
                   <p className="text-gray-400 mt-4">Balance:</p>

@@ -1,5 +1,7 @@
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
+import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { CivicAuthProvider } from '@civic/auth-web3/react';
 import { ArtworkProvider } from './contexts/ArtworkContext';
 import Navbar from './components/layout/Navbar';
@@ -13,26 +15,34 @@ import ArtworkDetail from './components/marketplace/ArtworkDetail';
 import './styles/civic-button.css';
 
 function App() {
+  const endpoint = "https://api.devnet.solana.com";
+
   return (
-    <CivicAuthProvider clientId={import.meta.env.VITE_CIVIC_APP_ID}>
-      <ArtworkProvider>
-        <Router>
-          <div className="min-h-screen flex flex-col bg-black text-white">
-            <Navbar />
-            <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<Hero />} />
-                <Route path="/marketplace" element={<ArtworkGrid />} />
-                <Route path="/create" element={<CreateArtwork />} />
-                <Route path="/artwork/:id" element={<ArtworkDetail />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </Router>
-      </ArtworkProvider>
-    </CivicAuthProvider>
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={[]} autoConnect>
+        <WalletModalProvider>
+          <CivicAuthProvider clientId={import.meta.env.VITE_CIVIC_APP_ID}>
+            <ArtworkProvider>
+              <Router>
+                <div className="min-h-screen flex flex-col bg-black text-white">
+                  <Navbar />
+                  <main className="flex-grow">
+                    <Routes>
+                      <Route path="/" element={<Hero />} />
+                      <Route path="/marketplace" element={<ArtworkGrid />} />
+                      <Route path="/create" element={<CreateArtwork />} />
+                      <Route path="/artwork/:id" element={<ArtworkDetail />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </div>
+              </Router>
+            </ArtworkProvider>
+          </CivicAuthProvider>
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   );
 }
 
