@@ -2,13 +2,20 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import { CivicAuthProvider } from '@civic/auth-web3/react';
 import { ArtworkProvider } from './contexts/ArtworkContext';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import Hero from '@/components/home/Hero';
-import Dashboard from '@/components/dashboard/Dashboard';
-import CreateArtwork from '@/components/marketplace/CreateArtwork';
-import ArtworkGrid from '@/components/marketplace/ArtworkGrid';
-import ArtworkDetail from '@/components/marketplace/ArtworkDetail';
+
+// Layout components
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import Hero from './components/home/Hero';
+import Dashboard from './components/dashboard/Dashboard';
+
+// Marketplace components
+import {
+  CreateArtwork,
+  ArtworkGrid,
+  ArtworkDetail
+} from './components/marketplace';
+
 import './styles/civic-button.css';
 
 function App() {

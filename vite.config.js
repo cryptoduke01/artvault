@@ -8,7 +8,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    extensions: ['.js', '.jsx', '.json']
+    extensions: ['.js', '.jsx', '.json'] // Add this line
   },
   build: {
     rollupOptions: {
