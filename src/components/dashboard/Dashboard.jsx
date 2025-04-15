@@ -58,22 +58,32 @@ const Dashboard = () => {
           }
         }
 
-        // Fetch user's artworks from Supabase
+        // Simplified artwork fetching
         try {
+          // First get artworks
           const { data: artworksData, error: artworksError } = await supabase
             .from('artworks')
-            .select(`
-              *,
-              users (
-                name,
-                avatar_url
-              )
-            `)
+            .select('*')
             .eq('creator_email', userContext.user.email);
 
           if (artworksError) throw artworksError;
-          console.log('Fetched artworks:', artworksData);
-          setUserArtworks(artworksData || []);
+
+          // Then get user data
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', userContext.user.email)
+            .single();
+
+          if (userError) throw userError;
+
+          // Combine the data
+          const artworksWithUser = artworksData.map(artwork => ({
+            ...artwork,
+            users: userData
+          }));
+
+          setUserArtworks(artworksWithUser || []);
         } catch (err) {
           console.error('Error fetching artworks:', err);
         }

@@ -2,12 +2,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { UserButton } from "@civic/auth-web3/react";
+import { UserButton, useUser } from "@civic/auth-web3/react";
 import "../../styles/civic-button.css";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const userContext = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,6 +18,15 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await userContext.signOut();
+      window.location.href = '/'; // Force refresh after sign out
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${scrolled

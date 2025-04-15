@@ -2,17 +2,13 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import { CivicAuthProvider } from '@civic/auth-web3/react';
 import { ArtworkProvider } from './contexts/ArtworkContext';
-
-// Layout components
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import Hero from './components/home/Hero';
 import Dashboard from './components/dashboard/Dashboard';
-
-// Import marketplace components directly
-import CreateArtwork from './components/marketplace/CreateArtwork.jsx';
-import ArtworkGrid from './components/marketplace/ArtworkGrid.jsx';
-import ArtworkDetail from './components/marketplace/ArtworkDetail.jsx';
+import CreateArtwork from './components/marketplace/CreateArtwork';
+import ArtworkGrid from './components/marketplace/ArtworkGrid';
+import ArtworkDetail from './components/marketplace/ArtworkDetail';
 
 import './styles/civic-button.css';
 

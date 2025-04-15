@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { useUser } from "@civic/auth-web3/react";
 import { supabase } from '../../lib/supabaseClient';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+
+const LoadingSpinner = () => (
+  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
 
 const CreateArtwork = () => {
   const { user } = useUser();
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -29,17 +38,30 @@ const CreateArtwork = () => {
     e.preventDefault();
     if (!user?.email || !file) return;
 
+    const toastId = toast.loading('Creating your artwork...');
+
     try {
       setUploading(true);
 
-      // First, get the user's ID from Supabase
-      const { data: userData, error: userError } = await supabase
+      // First, check if user exists
+      const { data: existingUser, error: checkError } = await supabase
         .from('users')
-        .select('id')
+        .select('email')
         .eq('email', user.email)
         .single();
 
-      if (userError) throw userError;
+      // If user doesn't exist, create them
+      if (!existingUser) {
+        const { error: userError } = await supabase
+          .from('users')
+          .insert({
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+            avatar_url: user.picture
+          });
+
+        if (userError) throw userError;
+      }
 
       // Upload image to Supabase Storage
       const fileExt = file.name.split('.').pop();
@@ -56,29 +78,28 @@ const CreateArtwork = () => {
         .getPublicUrl(fileName);
 
       // Create artwork record
-      const { error: insertError } = await supabase
+      const { data: artwork, error: insertError } = await supabase
         .from('artworks')
         .insert({
           title,
           description,
-          price,
+          price: parseFloat(price),
           image_url: publicUrl,
-          creator_id: userData.id
-        });
+          creator_email: user.email
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setPrice('');
-      setFile(null);
-      setPreview(null);
+      toast.success('Artwork created successfully!', { id: toastId });
 
-      toast.success('Artwork created successfully!');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      navigate('/marketplace');
+
     } catch (error) {
       console.error('Error creating artwork:', error);
-      toast.error('Error creating artwork. Please try again.');
+      toast.error(error.message || 'Error creating artwork', { id: toastId });
     } finally {
       setUploading(false);
     }
@@ -198,14 +219,16 @@ const CreateArtwork = () => {
         <button
           type="submit"
           disabled={uploading}
-          className="w-full bg-primary text-white px-8 py-4 hover:bg-primary/80 transition-colors border-2 border-primary hover:border-primary/80 font-general-sans disabled:opacity-50"
+          className="w-full py-3 bg-primary hover:bg-primary/90 disabled:bg-primary/50 
+            transition-all flex items-center justify-center space-x-2 h-12"
         >
           {uploading ? (
-            <div className="flex items-center justify-center">
+            <>
               <LoadingSpinner />
-            </div>
+              <span>Creating Artwork...</span>
+            </>
           ) : (
-            'Create Artwork'
+            <span>Create Artwork</span>
           )}
         </button>
       </form>

@@ -5,40 +5,32 @@ import { supabase } from '../lib/supabaseClient';
 const ArtworkContext = createContext();
 
 export function ArtworkProvider({ children }) {
-  const { user } = useUser();
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchArtworks = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      const { data, error: supabaseError } = await supabase
         .from('artworks')
-        .select(`
-          id,
-          title,
-          description,
-          price,
-          image_url,
-          created_at,
-          users (
-            id,
-            name,
-            email,
-            avatar_url
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
       setArtworks(data || []);
     } catch (err) {
-      console.error('Error fetching artworks:', err);
+      console.error('Error in fetchArtworks:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // Fetch artworks when the provider mounts
+  useEffect(() => {
+    fetchArtworks();
+  }, []); // Only run once when mounted
 
   const addArtwork = async (artworkData) => {
     try {
@@ -56,20 +48,8 @@ export function ArtworkProvider({ children }) {
     }
   };
 
-  useEffect(() => {
-    fetchArtworks();
-  }, []);
-
-  const value = {
-    artworks,
-    loading,
-    error,
-    fetchArtworks,
-    addArtwork
-  };
-
   return (
-    <ArtworkContext.Provider value={value}>
+    <ArtworkContext.Provider value={{ artworks, loading, error, fetchArtworks, addArtwork }}>
       {children}
     </ArtworkContext.Provider>
   );
