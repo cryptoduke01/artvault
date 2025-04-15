@@ -9,12 +9,10 @@ import Footer from './components/layout/Footer';
 import Hero from './components/home/Hero';
 import Dashboard from './components/dashboard/Dashboard';
 
-// Marketplace components
-import {
-  CreateArtwork,
-  ArtworkGrid,
-  ArtworkDetail
-} from './components/marketplace';
+// Import marketplace components directly
+import CreateArtwork from './components/marketplace/CreateArtwork.jsx';
+import ArtworkGrid from './components/marketplace/ArtworkGrid.jsx';
+import ArtworkDetail from './components/marketplace/ArtworkDetail.jsx';
 
 import './styles/civic-button.css';
 
