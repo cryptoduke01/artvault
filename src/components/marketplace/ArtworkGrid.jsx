@@ -83,7 +83,7 @@ const ArtworkGrid = () => {
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-4xl font-bold mb-8 font-display"
+        className="text-4xl font-bold mb-8 mt-8 font-display"
       >
         Digital Art Marketplace
       </motion.h2>

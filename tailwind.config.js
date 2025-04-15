@@ -7,22 +7,23 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['General Sans', 'sans-serif'],
         'general-sans': ['General Sans', 'sans-serif'],
         display: ['Clash Display', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
+        primary: '#9333EA', // More vibrant purple
+        secondary: '#6D28D9', // Secondary purple for gradients
+        'primary-hover': '#7E22CE',
+        background: {
+          DEFAULT: '#0A0A0A',
+          lighter: '#1A1A1A',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: '#8B5CF6', // Purple color
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
