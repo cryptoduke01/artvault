@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import { Connection } from '@solana/web3.js';
 import { ethers } from 'ethers';
+import ProfileCardModal from '../profile/ProfileCardModal';
 
 const solanaEndpoint = "https://api.devnet.solana.com";
 const solanaConnection = new Connection(solanaEndpoint);
@@ -21,6 +22,7 @@ const Dashboard = () => {
   const [userArtworks, setUserArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedAddress, setCopiedAddress] = useState('');
+  const [isProfileCardOpen, setIsProfileCardOpen] = useState(false);
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -140,12 +142,28 @@ const Dashboard = () => {
             <div className="flex-grow">
               <h2 className="text-2xl font-bold font-display">{userContext.user?.name}</h2>
               <p className="text-gray-400 font-general-sans">{userContext.user?.email}</p>
-
             </div>
             <div className="text-center">
               <p className="text-4xl font-bold text-primary font-display">{userArtworks.length}</p>
               <p className="text-gray-400 font-general-sans text-sm">Artworks Created</p>
             </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsProfileCardOpen(true)}
+              className="px-4 py-2 border border-primary bg-primary/10 hover:bg-primary/20 text-white transition-colors"
+            >
+              <span className="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <circle cx="9" cy="10" r="2" />
+                  <path d="M15 8h2" />
+                  <path d="M15 12h2" />
+                  <path d="M7 16h10" />
+                </svg>
+                <span>ID Card</span>
+              </span>
+            </motion.button>
           </div>
         </div>
 
@@ -278,6 +296,15 @@ const Dashboard = () => {
           )}
         </div>
       </motion.div>
+
+      {/* Profile Card Modal */}
+      <ProfileCardModal
+        isOpen={isProfileCardOpen}
+        onClose={() => setIsProfileCardOpen(false)}
+        user={userContext.user}
+        solanaWallet={userContext.solana?.wallet?.publicKey}
+        ethereumWallet={userContext.ethereum?.address}
+      />
     </div>
   );
 };
