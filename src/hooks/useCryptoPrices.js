@@ -1,43 +1,42 @@
 import { useState, useEffect } from 'react';
 
-export const useCryptoPrices = () => {
+export function useCryptoPrices() {
   const [prices, setPrices] = useState({
-    solana: null,
-    ethereum: null,
-    loading: true,
-    error: null
+    solana: { usd: 0 },
+    ethereum: { usd: 0 }
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const response = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=solana,ethereum&vs_currencies=usd'
-        );
-        const data = await response.json();
+        // Fetch SOL and ETH prices from Binance API
+        const [solResponse, ethResponse] = await Promise.all([
+          fetch('https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT'),
+          fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT')
+        ]);
+
+        const solData = await solResponse.json();
+        const ethData = await ethResponse.json();
+
         setPrices({
-          solana: data.solana.usd,
-          ethereum: data.ethereum.usd,
-          loading: false,
-          error: null
+          solana: { usd: parseFloat(solData.price) },
+          ethereum: { usd: parseFloat(ethData.price) }
         });
       } catch (error) {
-        setPrices(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Failed to fetch prices'
-        }));
+        console.error('Failed to fetch prices:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchPrices();
-    // Refresh prices every 60 seconds
-    const interval = setInterval(fetchPrices, 60000);
+    const interval = setInterval(fetchPrices, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
   }, []);
 
-  return prices;
-};
+  return { prices, loading };
+}
 
 export const formatUSD = (amount) => {
   return new Intl.NumberFormat('en-US', {
@@ -47,14 +46,16 @@ export const formatUSD = (amount) => {
 };
 
 export const CryptoAmount = ({ amount, cryptoType, className = '' }) => {
-  const { solana, ethereum, loading } = useCryptoPrices();
-
-  const price = cryptoType.toLowerCase() === 'sol' ? solana : ethereum;
+  const { prices, loading } = useCryptoPrices();
   const symbol = cryptoType.toUpperCase();
 
-  if (loading || !price) {
+  if (loading || !prices) {
     return <span className={className}>{amount} {symbol}</span>;
   }
+
+  const price = cryptoType.toLowerCase() === 'sol'
+    ? prices.solana.usd
+    : prices.ethereum.usd;
 
   const usdValue = amount * price;
 

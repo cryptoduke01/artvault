@@ -5,6 +5,37 @@ const TransactionSuccessModal = ({ isOpen, onClose, type, details }) => {
 
   const isError = type === 'error';
 
+  const shortenSignature = (signature) => {
+    if (!signature) return '';
+    return `${signature.substring(0, 4)}...${signature.substring(signature.length - 4)}`;
+  };
+
+  const downloadReceipt = () => {
+    // Create receipt content
+    const receiptDate = new Date().toLocaleString();
+    const receiptContent = `
+      Transaction Receipt
+      -------------------
+      Date: ${receiptDate}
+      ${type === 'purchase' ? `Item: ${details.artworkTitle || 'Purchase'}` : 'Transaction Type: Transfer'}
+      ${details.amount ? `Amount: ${details.amount} SOL` : ''}
+      ${details.recipient ? `Recipient: ${details.recipient}` : ''}
+      Transaction ID: ${details.signature}
+      Explorer Link: https://explorer.solana.com/tx/${details.signature}?cluster=devnet
+    `;
+
+    // Create blob and download
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${shortenSignature(details.signature)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -63,22 +94,36 @@ const TransactionSuccessModal = ({ isOpen, onClose, type, details }) => {
                     <p>Amount: {details.amount} SOL</p>
                   )}
                   {details.recipient && (
-                    <p className="text-sm break-all">
-                      To: {details.recipient}
+                    <p className="text-sm">
+                      To: {shortenSignature(details.recipient)}
+                    </p>
+                  )}
+                  {details.signature && (
+                    <p className="text-xs text-gray-400">
+                      TX: {shortenSignature(details.signature)}
                     </p>
                   )}
                 </>
               )}
 
               {details.signature && (
-                <a
-                  href={`https://explorer.solana.com/tx/${details.signature}?cluster=devnet`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:text-primary/80 underline block mt-2"
-                >
-                  View on Solana Explorer
-                </a>
+                <div className="flex flex-col space-y-2 mt-4">
+                  <a
+                    href={`https://explorer.solana.com/tx/${details.signature}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 underline block"
+                  >
+                    View on Solana Explorer
+                  </a>
+                  
+                  <button 
+                    onClick={downloadReceipt}
+                    className="text-primary hover:text-primary/80 underline"
+                  >
+                    Download Receipt
+                  </button>
+                </div>
               )}
             </div>
 
@@ -96,4 +141,4 @@ const TransactionSuccessModal = ({ isOpen, onClose, type, details }) => {
   );
 };
 
-export default TransactionSuccessModal; 
+export default TransactionSuccessModal;

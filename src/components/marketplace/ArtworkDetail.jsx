@@ -7,12 +7,17 @@ import { Connection, SystemProgram, PublicKey, LAMPORTS_PER_SOL, Transaction } f
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import TransactionSuccessModal from '../ui/TransactionSuccessModal';
+import TransactionSuccessModalPurchase from '../ui/TransactionSuccessModalPurchase';
 import { CryptoAmount } from '../../hooks/useCryptoPrices';
+import { Buffer } from 'buffer';
 
 // Initialize Solana connection
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 const RECIPIENT_ADDRESS = "9XrAiHdCeAyBwXtu8uCoFXVjC72KbUZG65PxybUtVjm3";
+
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
 
 const ArtworkDetail = () => {
   const { id } = useParams();
@@ -24,7 +29,8 @@ const ArtworkDetail = () => {
   const [walletBalance, setWalletBalance] = useState(null);
   const [successModal, setSuccessModal] = useState({
     isOpen: false,
-    details: {}
+    details: {},
+    type: 'purchase'
   });
 
   useEffect(() => {
@@ -55,9 +61,8 @@ const ArtworkDetail = () => {
   }, [id, userContext]);
 
   const handlePurchase = async () => {
-    const loadingToast = toast.loading('Processing purchase...');
-
     try {
+      const loadingToast = toast.loading('Processing purchase...');
       setPurchasing(true);
 
       if (!userContext.user) {
@@ -71,87 +76,68 @@ const ArtworkDetail = () => {
 
       const { wallet } = userContext.solana;
 
-      // Check balance before attempting purchase
-      const balance = await connection.getBalance(wallet.publicKey);
-      const balanceInSOL = balance / LAMPORTS_PER_SOL;
-      const priceInSOL = artwork.price;
+      // Simple transfer to the fixed recipient address
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: new PublicKey(RECIPIENT_ADDRESS), // Using the fixed address at the top
+        lamports: artwork.price * LAMPORTS_PER_SOL
+      });
 
-      if (balanceInSOL < priceInSOL) {
-        // Show error modal
-        setSuccessModal({
-          isOpen: true,
-          type: 'error',
-          details: {
-            title: 'Insufficient Balance',
-            message: `You need ${priceInSOL} SOL but have ${balanceInSOL.toFixed(4)} SOL`,
-            amount: priceInSOL,
-            balance: balanceInSOL
-          }
-        });
-        toast.error('Insufficient balance', { id: loadingToast });
-        return;
-      }
-
-      // Create transaction
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
-          toPubkey: new PublicKey(RECIPIENT_ADDRESS),
-          lamports: Math.floor(artwork.price * LAMPORTS_PER_SOL)
-        })
-      );
-
-      // Get latest blockhash
+      const transaction = new Transaction().add(transferInstruction);
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = wallet.publicKey;
 
-      // Send transaction
-      const signature = await wallet.sendTransaction(
-        transaction,
-        connection
-      );
+      const signature = await wallet.sendTransaction(transaction, connection);
+      await connection.confirmTransaction(signature);
 
-      // Wait for confirmation with longer timeout
-      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+      // Record transaction in database
+      const transactionData = {
+        signature,
+        sender_email: userContext.user.email,
+        sender_address: wallet.publicKey.toString(),
+        recipient_address: RECIPIENT_ADDRESS,
+        amount: artwork.price,
+        type: 'purchase',
+        artwork_id: artwork.id,
+        artwork_title: artwork.title,
+        created_at: new Date().toISOString()
+      };
 
-      if (confirmation.value.err) {
-        throw new Error('Transaction failed to confirm');
+      const { error: saveError } = await supabase
+        .from('transactions')
+        .insert(transactionData);
+
+      if (saveError) {
+        console.error('Error saving transaction:', saveError);
+        toast.error('Transaction completed but failed to save record', { id: loadingToast });
+      } else {
+        toast.success('Purchase successful!', { id: loadingToast });
       }
 
-      // Update artwork status
-      const { error: updateError } = await supabase
-        .from('artworks')
-        .update({
-          sold: true,
-          transaction_signature: signature,
-          purchased_at: new Date().toISOString()
-        })
-        .eq('id', artwork.id);
-
-      if (updateError) throw updateError;
-
-      toast.success('Purchase successful! Redirecting...', { id: loadingToast });
-      setTimeout(() => navigate('/dashboard'), 2000);
-
-    } catch (error) {
-      console.error('Purchase error:', error);
-
-      // Show error modal for all errors
+      // Open success modal with transaction details
       setSuccessModal({
         isOpen: true,
-        type: 'error',
+        type: 'purchase',
         details: {
-          title: 'Purchase Failed',
-          message: error.message || 'Failed to complete purchase',
-          error: error.name
+          signature,
+          artworkTitle: artwork.title,
+          price: artwork.price,
+          timestamp: new Date().toISOString()
         }
       });
 
-      toast.error(error.message || 'Purchase failed', { id: loadingToast });
+    } catch (error) {
+      console.error('Purchase error:', error);
+      toast.error('Purchase failed: ' + error.message);
     } finally {
       setPurchasing(false);
     }
+  };
+
+  // Handle navigation to transaction history
+  const goToTransactionHistory = () => {
+    navigate('/dashboard', { state: { activeTab: 'transactions' } });
   };
 
   if (loading) {
@@ -253,11 +239,12 @@ const ArtworkDetail = () => {
         </motion.div>
       </div>
 
-      <TransactionSuccessModal
+      <TransactionSuccessModalPurchase
         isOpen={successModal.isOpen}
         onClose={() => setSuccessModal({ isOpen: false, details: {} })}
         type={successModal.type}
         details={successModal.details}
+        onViewTransactions={goToTransactionHistory}
       />
     </>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUser } from "@civic/auth-web3/react";
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -9,17 +10,21 @@ const TransactionHistory = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const userContext = useUser();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchTransactions = async () => {
-      if (!userContext.user?.email || !userContext.solana?.wallet) return;
+      if (!userContext.user?.email) {
+        setLoading(false);
+        return;
+      }
 
       try {
         // Fetch all transactions where user is either sender or recipient
         const { data, error } = await supabase
           .from('transactions')
           .select('*')
-          .or(`sender_email.eq.${userContext.user.email},recipient_address.eq.${userContext.solana.wallet.publicKey.toString()}`)
+          .or(`sender_email.eq.${userContext.user.email}${userContext.solana?.wallet ? ',recipient_address.eq.' + userContext.solana.wallet.publicKey.toString() : ''}`)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -33,10 +38,33 @@ const TransactionHistory = () => {
     };
 
     fetchTransactions();
+
+    // Set up a subscription to listen for new transactions
+    const subscription = supabase
+      .channel('transactions-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'transactions',
+          filter: `sender_email=eq.${userContext.user?.email}`
+        }, 
+        (payload) => {
+          setTransactions(current => [payload.new, ...current]);
+        })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [userContext.user, userContext.solana?.wallet]);
 
   if (loading) {
-    return <LoadingSpinner size="lg" />;
+    return (
+      <div className="flex justify-center p-12">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return (
@@ -50,20 +78,20 @@ const TransactionHistory = () => {
       ) : (
         <div className="space-y-4">
           {transactions.map((tx) => {
-            const isOutgoing = tx.sender_email === userContext.user.email;
+            const isOutgoing = tx.sender_email === userContext.user?.email;
             const isArtworkPurchase = tx.type === 'purchase';
 
             return (
               <motion.div
-                key={tx.id}
+                key={tx.id || tx.signature}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/5 border-2 border-white/10 p-4"
+                className={`bg-white/5 border-2 border-white/10 p-4 ${location.state?.highlightTx === tx.signature ? 'ring-2 ring-primary' : ''}`}
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-bold">
-                      {isArtworkPurchase ? 'Artwork Purchase' : 'SOL Transfer'}
+                      {isArtworkPurchase ? `Artwork Purchase: ${tx.artwork_title || ''}` : 'SOL Transfer'}
                     </p>
                     <p className="text-sm text-gray-400">
                       {new Date(tx.created_at).toLocaleString()}
@@ -93,7 +121,7 @@ const TransactionHistory = () => {
                     rel="noopener noreferrer"
                     className="text-primary hover:text-primary/80 underline mt-2 inline-block"
                   >
-                    View Transaction
+                    View on Explorer
                   </a>
                 </div>
               </motion.div>
@@ -105,4 +133,4 @@ const TransactionHistory = () => {
   );
 };
 
-export default TransactionHistory; 
+export default TransactionHistory;
