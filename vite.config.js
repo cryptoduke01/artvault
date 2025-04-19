@@ -16,9 +16,15 @@ export default defineConfig({
   resolve: {
     extensions: ['.mjs', '.js', '.jsx', '.json', '.ts', '.tsx'],
     alias: {
+      'buffer': 'buffer',
       '@': path.resolve(__dirname, './src'),
       'components': path.resolve(__dirname, './src/components')
     }
+  },
+  define: {
+    'global': {},
+    'process.env': {},
+    'Buffer': ['buffer', 'Buffer']
   },
   server: {
     port: 3000

@@ -11,11 +11,12 @@ import Dashboard from './components/dashboard/Dashboard';
 import CreateArtwork from './components/marketplace/CreateArtwork';
 import ArtworkGrid from './components/marketplace/ArtworkGrid';
 import ArtworkDetail from './components/marketplace/ArtworkDetail';
+import { clusterApiUrl } from '@solana/web3.js';
 
 import './styles/civic-button.css';
 
 function App() {
-  const endpoint = "https://api.devnet.solana.com";
+  const endpoint = clusterApiUrl('devnet');
 
   return (
     <ConnectionProvider endpoint={endpoint}>

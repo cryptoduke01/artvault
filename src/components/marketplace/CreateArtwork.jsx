@@ -117,7 +117,7 @@ const CreateArtwork = () => {
     <div className="max-w-4xl mx-auto p-6 pt-24">
       <h1 className="text-3xl font-bold mb-8 border-b border-white/10 pb-4">Create New Artwork</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Left Column - Form Fields */}
           <div className="space-y-6">
@@ -146,8 +146,8 @@ const CreateArtwork = () => {
               <label className="block text-sm font-medium text-gray-200">
                 Price (SOL)
               </label>
-              <input
-                type="number"
+                <input
+                  type="number"
                 step="0.1"
                 min="0"
                 name="price"
@@ -157,10 +157,10 @@ const CreateArtwork = () => {
                 placeholder="Enter price in SOL"
               />
             </div>
-          </div>
+            </div>
 
           {/* Right Column - Image Upload */}
-          <div>
+            <div>
             <label className="block text-sm font-medium mb-2">Artwork Image</label>
             <div className="border border-white/10 p-4">
               {preview ? (
@@ -189,7 +189,7 @@ const CreateArtwork = () => {
                     accept="image/*"
                     className="hidden"
                     id="artwork-upload"
-                    required
+                required
                   />
                   <label
                     htmlFor="artwork-upload"
@@ -214,10 +214,10 @@ const CreateArtwork = () => {
               )}
             </div>
           </div>
-        </div>
+            </div>
 
         <button
-          type="submit"
+              type="submit"
           disabled={uploading}
           className="w-full py-3 bg-primary hover:bg-primary/90 disabled:bg-primary/50 
             transition-all flex items-center justify-center space-x-2 h-12"
@@ -231,7 +231,7 @@ const CreateArtwork = () => {
             <span>Create Artwork</span>
           )}
         </button>
-      </form>
+          </form>
     </div>
   );
 };
