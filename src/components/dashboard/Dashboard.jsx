@@ -83,7 +83,7 @@ const Dashboard = () => {
       const balance = await provider.getBalance(userContext.ethereum.address);
       const formattedBalance = ethers.formatEther(balance);
       console.log('Fetched ETH balance:', formattedBalance);
-
+      
       setSepoliaBalance(formattedBalance);
       toast.success('ETH balance updated!');
     } catch (err) {
